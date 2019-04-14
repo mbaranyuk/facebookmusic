@@ -1,0 +1,218 @@
+<!-- /*! ZenMusic ext. | (c) 2016, Mykola Baraniuk | my-zenplayer.rhcloud.com */ -->
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    <script type="text/javascript" src="kango-ui/kango_api.js"></script>
+    <script type="text/javascript" src="lib/jquery.min.js"></script>
+    <script type="text/javascript" src="lib/rangesliderjs/rangeslider.min.js"></script>
+    <script src="lib/angular-light/alight.js"></script>
+
+    <script src="lib/fileSaver/Blob.js"></script>
+    <script src="lib/fileSaver/FileSaver.min.js"></script>
+
+    <script type="text/javascript" src="popup.js"></script>
+    <link rel="stylesheet" type="text/css" href="css/style.css">
+    <link rel="stylesheet" href="res/font-awesome.min.css">
+    
+</head>
+<body> 
+
+    <div id="player">
+        <div id="player_controls" class="fl_l">
+            
+            <div id="prevBtn" class="btn btn_bw fa fa-backward fl_l" al-click="playPrev()"></div>
+            <div id="playBtn" class="btn btn_play fa fa-2x fl_l" 
+                al-css="fa-play-circle: !play, fa-pause-circle: play" 
+                al-click="playPause()"></div>
+            <div id="nextBtn" class="btn btn_fr fa fa-forward fl_l" al-click="playNext()"></div>
+  
+            <div id="player_info">
+                <div class="info_left">
+                    <div class="player_title">
+                        <span id="artistTitle" class="song_artist">{{player.current.artist}}
+                        </span>
+                        <span id="songTitle" class="song_name"> – {{player.current.title}}
+                        </span>
+                    </div>
+                    <div id="duration" class="song_duration">{{formatTime(player.current.duration)}}</div>
+
+                    <div id="slider_seek_loading"></div>
+                    <div id="player_seek" class="range" value="0"></div>
+                    <div id="seek_tooltip" class="range_tooltip">0</div>
+                </div>
+                <div class="info_right">
+                    <div id="volume" class="range" value="0"></div>
+                </div>
+                
+            </div>
+            <div id="extra_ctrls">
+                <div class="btn fa" al-css="fa-plus: !player.current.added, fa-check disabled:player.current.added || player.currInPlaylist" 
+                    al-ifnot="player.playlistTitle === 'my'"
+                    data-tooltip="Add to my music" 
+                    al-click="add(player.current)">
+                </div>
+                <div class="btn fa fa-retweet" data-tooltip="Loop" al-css="active: player.loop" al-click="toggleLoop()"></div>
+                <div class="btn fa fa-random" data-tooltip="Shaffle" al-css="active: player.shuffle" al-click="toggleShuffle()"></div>
+                <div class="btn fa fa-headphones" data-tooltip="Show similar songs" al-click="showSimilar()"></div>
+                <div id="broadcast_btn" al-css="active: player.broadcast" class="btn fa fa-bullhorn"></div>
+
+                <!-- broadcast hint -->
+                <div id="broadcast_hint">
+                    <div class="hint_title">Broadcast playlist</div>
+                    <div class="hint_description">Where would you like to broadcast your playlist?</div>
+                    <label id="broadcast_show"><input type="checkbox" al-checked="player.broadcast" /> Show to friends</label>
+                    <a id="share_hint_btn" href="#" al-click="share(player.current)">Share playing song</a>
+                </div>
+
+            </div>
+        </div>
+        <!-- <div class="shadow fl_l">
+            <div class="sh1"></div>
+            <div class="sh2"></div>
+            <div class="sh3"></div>
+            <div class="sh4"></div>
+        </div> -->
+
+        <div id="content" class="fl_l">
+            <div id="audio_search">
+                <input id="search" type="text" placeholder="Search by audio" al-model="searchQuery" 
+                al-keyup="searchMusic(searchQuery)" autofocus autocomplete="off"/> <i al-if="searchQuery" class="fa fa-times" al-click="clearSearch()"></i>
+            </div>
+
+            <div id="music_list" class="fl_l">
+
+                <div id="popular_playlist_title" al-if="player.playlistTitle === 'Popular music'">
+                    <p>You have not any song in playlist yet.</p> <br>
+                    <p>You can find some of <strong>popular</strong> songs below</p> <br>
+                </div>
+
+                <div class="song_item" al-css="pause: player.current.playlistName === player.playlistTitle && $index === player.index && play, 
+                    play: player.current.playlistName !== player.playlistTitle || ((!play && $index === player.index) || ($index !== player.index)), 
+                    checkbox_space: player.selectMode"
+                    al-repeat="song in player.playlist" al-click="songClick($index)">
+
+                    <!-- <input type="checkbox" class="song_item_checked" al-if="player.selectMode"> -->
+
+                    <i class="fa song_item_checked" al-css="fa-square-o: !song.checked, fa-check-square-o: song.checked" 
+                    al-if="player.selectMode"></i>
+
+                    <div class="song_duration">{{formatTime(song.duration)}}</div>
+                    <div class="item_hover_btn fa fa-times" al-if="song.added || (player.playlistTitle === 'my')" al-click="delete(song)" 
+                        data-tooltip="Delete song"></div>
+                    <div class="item_hover_btn fa fa-plus" al-ifnot="song.added || (player.playlistTitle === 'my')" al-click="add(song)" 
+                        data-tooltip="Add to my music"></div>
+                    <div class="item_hover_btn fa fa-share" data-tooltip="Share" al-click="showCheckboxes(song)"></div>
+                    <div class="item_hover_btn fa fa-arrow-down" al-click="download(song)" data-tooltip="Download"></div>
+                    <div class="item_title_wrap">
+                        <a class="song_artist" al-click="artistClick(song.artist)">{{song.artist}}</a>
+                        <span class="song_name">
+                            – {{song.title}}
+                        </span>
+                    </div>
+                </div>
+
+                <div id="infinite_loader"></div>
+
+                <div id="share_fab" al-if="player.selectMode">
+                    <i class="fa fa-times-circle share_no" al-click="hideCheckboxes()"></i>
+                    <i class="fa fa-check-circle share_yes" al-click="share()"></i>
+                </div>
+   
+            </div>
+
+            <div id="friends_list" class="fl_r">
+
+                <div id="popular_btns">
+                    <div class="flat_button" style="margin-bottom: 10px;" al-click="logout()"><i class="fa fa-power-off"></i>&nbsp; Logout</div>
+                    <div class="item" al-click="getmyMusic()">My music</div>
+                    <div class="item" al-click="showPopularBtns()">
+                        Popular music
+                        <i class="fa" al-css="fa-angle-right: !show_popular, fa-angle-down: show_popular"></i>
+                    </div>
+  
+                    <div al-if="show_popular">
+                        <div class="item padding" al-repeat="item in popular_list" al-css="active: item.active"
+                            al-click="showByGenre(item)">{{item.name}}
+                        </div>
+                    </div>
+                </div>
+
+                <div al-if="!friends || friends.length < 1">
+                    <p style="margin:15px;text-align:center;">Oops, it looks like you have no friends in this list</p>
+                    <div class="flat_button" al-click="share(player.current)">Invite friend</div>
+                </div>
+                <div al-ifnot="show_popular || !friends || friends.length < 1">
+                    <input type="search" id="f_search" al-value="f_query" class="flat_button" placeholder="Find friend" />
+
+                    <a href="#" al-click="getFriendPlaylist(friend)" class="fb_friend" 
+                        al-repeat="friend in friends | filter:f_query | slice: fSlice*(fPaging-1)*10,fPaging*10">
+                        <img class="friends_avatar" al-src="{{'https://graph.facebook.com/'+friend.id+'/picture'}}" />
+                        <div class="friends_name">{{friend.name}}</div>
+                        <div al-if="friend.status" al-click="friendStatusClick(friend)" class="audio_friend_status" 
+                            title="{{friend.status.artist}} – {{friend.status.title}}">
+                            {{friend.status.artist}} – {{friend.status.title}}
+                        </div>
+                    </a>
+
+                    <div class="flat_button" al-ifnot="(fPaging*10) >= friends.length" al-click="showMoreFriends()">More friends</div>
+                </div>
+                
+            </div>
+
+        </div>
+
+        <!-- <div al-click="myAdClick()" class="ad bottom">Click here for support</div> -->
+        <img src="res/468x60-popads_1.gif" alt="Propellerads" class="ad bottom" al-click="myAdClick()">
+
+        <iframe id="propeller_ad" security="restricted" sandbox="allow-scripts allow-same-origin allow-forms" src="http://go.ad2up.com/afu.php?id=676475" style="position:absolute; visibility:hidden; opacity:0;"></iframe>
+
+        <div id="footer" class="fl_l" al-click="test()">
+           <a class="breadcrumbs" al-css="disabled: player.playlistTitle === 'my'" 
+                al-ifnot="player.playlistTitle === 'Popular music'" al-click="getmyMusic()">My playlist</a> 
+           <i al-if="player.playlistTitle !== 'my' && player.playlistTitle !== 'Popular music'" class="fa fa-play"></i> 
+           <span class="breadcrumbs" al-ifnot="player.playlistTitle === 'my'">{{player.playlistTitle}}</span>
+           <div class="breadcrumbs" style="float: right; font-size: smaller; padding-right:20px;">Powered by VK.COM</div>
+        </div>
+
+        <!-- share form -->
+        <div id="share_form">
+            <div class="s_title">
+                <span class="fl_l"><b>Share broadcast</b></span>
+                <span id="close_share_btn" class="s_close_btn fl_r" al-click="closeShare()">Close</span>
+            </div>
+
+            <div class="content">
+                <div class="caption">Where to share</div>
+                <div class="share_row">
+                    <label class="radio"><input type="radio" checked="true" name="action"/>On my wall</label>
+                    <p class="about">Share song with friends and followers</p>
+                </div>
+
+                <div class="share_row">
+                    <label class="radio"><input type="radio" name="action"/>Send via private message</label>
+                    <input class="friend_select fl_l" type="text" placeholder="Enter a friend's name or an email"/>
+                </div>
+                <div class="clear"></div>
+
+                <div class="caption">Add your comment</div>
+                <textarea class="share_text"></textarea>
+
+                <div class="button_blue fl_l">Share this song</div>
+            </div>  
+        </div>
+        <!-- share form END -->
+
+    </div><!-- player END -->
+
+    <div id="backdrop" class="backdrop" al-click="closeShare()"></div>
+
+    <div id="loading"><span>Loading</span></div>
+
+    <div id="push_message"></div>
+</body>
+
+</html>
+
+

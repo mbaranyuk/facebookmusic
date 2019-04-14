@@ -1,0 +1,73 @@
+/*! ZenMusic ext. | (c) 2016, Mykola Baraniuk | my-zenplayer.rhcloud.com */
+.m_list_wrap {
+	z-index: 1 !important;
+	cursor: pointer;
+}
+.m_list_wrap:hover {
+	background-color: #f5f7fa;
+}
+
+.song_item {
+	width: 96%;
+	padding: 6px 10px;
+    position: relative;
+    border-radius: 3px;
+    line-height: 24px;
+    color: #33567f;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.song_item .duration {
+	float: right;
+    color: #939699;
+}
+
+
+.play:before{
+	content: ' ';
+	-ms-filter: "progid:DXImageTransform.Microsoft.AlphaImageLoader(src='res/play.png', sizingMethod='scale')";
+	background-image: url(play.png);
+	background-repeat: no-repeat;
+
+	display: inline-block;
+	float: left;
+	padding-right: 10px;
+	width: 22px;
+	height: 22px;
+	background-size: 22px;
+}
+
+.m_list_description {
+	width: 30%;
+    margin: 0 auto;
+    text-align: center;
+	//background: rgba(0,0,0,.7);
+	//border-radius: 15px;
+    padding: 4px 7px 5px;
+    color: #939699;
+    //box-shadow: 0 1px 3px rgba(0,0,0,.1);
+    //font-size: smaller;
+}
+
+.ext_arrow {
+	position: fixed;
+	visibility: hidden;
+	opacity: 1;
+	width: 125px;
+	height: 123px;
+	right: 3px;
+	top: 13%;
+	z-index: 9999;
+	background-image: url(arrow.png);
+}
+
+.animate {
+	-webkit-transition: top 500ms linear, opacity 500ms linear;
+    -moz-transition: top 500ms linear, opacity 500ms linear;
+    -o-transition: top 500ms linear, opacity 500ms linear;
+    transition: top 500ms linear, opacity 500ms linear;
+
+	visibility: visible; !important;
+	top: 5%;
+	opacity: 0;
+}

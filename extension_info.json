@@ -1,0 +1,28 @@
+{
+    "content_scripts": ["content.js"], 
+    "description": "Free music extension for listen, download and share your favorite music", 
+    "creator": "Mykola Baraniuk", 
+    "background_scripts": [
+        "lib/howler-audio/howler2.0.min.js",
+        "lib/player.js",
+        "main.js"
+    ], 
+    "homepage_url": "http://my-zenplayer.rhcloud.com/", 
+    "version": "0.1.0", 
+    "browser_button": {
+        "caption": "Kango", 
+        "icon": "res/play.png", 
+        "tooltipText": "ZenMusic Ext.",
+        "popup": {
+            "url": "popup.html",
+            "width": 815,
+            "height": 650
+        }
+    }, 
+    "name": "ZenMusic",
+    "permissions": {
+        "notifications": true,
+        "cookies": true,
+        "xhr": ["http://*/*", "https://*/*"]
+    }
+}
